@@ -1,64 +1,46 @@
-import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
-import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Scene } from "@babylonjs/core/scene";
-import "@babylonjs/core/Materials/standardMaterial";
+import { Sprite } from "@babylonjs/core/Sprites/sprite";
+import { SpritePackedManager } from "@babylonjs/core/Sprites/spritePackedManager";
 
 class Playground {
     public static CreateScene(engine: Engine, canvas: HTMLCanvasElement): Scene {
         // This creates a basic Babylon Scene object (non-mesh)
         var scene = new Scene(engine);
+        scene.clearColor = new Color4(0, 0, 0, 1);
 
-        // This creates and positions an arc-rotate camera (non-mesh)
-        var camera = new ArcRotateCamera("camera", Math.PI / 2, Math.PI / 2.5, 10, Vector3.Zero(), scene);
+        const camera = new FreeCamera("camera", new Vector3(0, -1, -10), scene);
+        camera.attachControl();
 
-        // This attaches the camera to the canvas
-        camera.attachControl(canvas, true);
+        // Crear la luz
+        const light = new HemisphericLight("light1", new Vector3(0, 6, -4), scene);
+        light.intensity = 1;
 
-        // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-        var light = new HemisphericLight("light1", new Vector3(0, 1, 0), scene);
+        const enemies: Sprite[] = [];
 
-        // Default intensity is 1. Let's dim the light a small amount
-        light.intensity = 0.7;
+        const enemyPacker = new SpritePackedManager("enemyPacker", "/assets/eneAtlas.png", 30, scene);
 
-        // Our built-in 'sphere' shape. Params: name, options, scene
-        var sphere = MeshBuilder.CreateSphere("sphere", {diameter: 2, segments: 32}, scene);
+        //by default takes eneexplosion index 0
+        enemies[0] = new Sprite("ene0", enemyPacker);
+        enemies[0].position = new Vector3(2, 2, 0);
+        enemies[0].cellIndex = 0;
 
-        // Move the sphere upward 1/2 its height
-        sphere.position.y = 1;
+        enemies[1] = new Sprite("ene1", enemyPacker);
+        enemies[1].position = new Vector3(2, 1, 0);
+        enemies[1].cellRef = "enebullet";
 
-        // Our built-in 'ground' shape. Params: name, options, scene
-        var ground = MeshBuilder.CreateGround("ground", {width: 6, height: 6}, scene);
+        enemies[2] = new Sprite("ene2", enemyPacker);
+        enemies[2].position = new Vector3(2, 0, 0);
+        enemies[2].cellRef = "ene2";
 
-        // Setup GUI.
-        let canvasZone = document.getElementById("canvasZone")!;
-        canvasZone.style.position = "relative";
-
-        const oldGui = document.getElementById("datGui");
-        if (oldGui) {
-            canvasZone.removeChild(oldGui);
-        }
-
-        const gui = new dat.GUI({ autoPlace: false });
-        canvasZone.appendChild(gui.domElement);
-        gui.domElement.id = "datGui";
-        gui.domElement.style.position = "absolute";
-        gui.domElement.style.top = "0";
-        gui.domElement.style.left = "0";
-
-        const cameraGui = gui.addFolder("camera");
-        cameraGui.add(camera, "alpha", -Math.PI, Math.PI, 0.01).listen();
-        cameraGui.add(camera, "beta", 0.01, Math.PI - 0.01, 0.01).listen();
-        cameraGui.add(camera, "radius", 5, 100, 0.01).listen();
-        cameraGui.open();
-
-        camera.onViewMatrixChangedObservable.add(() => {
-            while (camera.alpha < -Math.PI) camera.alpha += 2 * Math.PI;
-            while (Math.PI < camera.alpha) camera.alpha -= 2 * Math.PI;
-            camera.radius = Math.min(Math.max(5, camera.radius), 100);
-        });
+        enemies[0] = new Sprite("ene3", enemyPacker);
+        enemies[0].position = new Vector3(2, -1, 0);
+        enemies[0].cellRef = "ene3";
+        enemies[0].playAnimation(0, 2, true, 400);
 
         return scene;
     }
